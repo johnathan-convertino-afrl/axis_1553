@@ -1,0 +1,57 @@
+CAPI=2:
+
+name: AFRL:device_converter:axis_1553:1.0.0
+description: encode and decode data for the 1553 bus to AXIS.
+
+filesets:
+  src:
+    files:
+      - src/axis_1553.v
+    file_type: verilogSource
+
+  tb_cocotb:
+    files:
+      - tb/tb_cocotb.py : {file_type : user, copyto : .}
+      - tb/tb_cocotb.v  : { file_type: verilogSource }
+    
+  dep:
+    depend:
+      - AFRL:clock:mod_clock_ena_gen:1.1.1
+      - AFRL:utility:helper:1.0.0
+      - AFRL:simple:piso:1.0.1
+      - AFRL:simple:sipo:1.0.1
+    
+targets:
+  default: &default
+    description: Default for IP intergration.
+    filesets: [src, dep]
+    
+  lint:
+    description: Lint with Verible
+    toplevel: axis_1553
+    filesets: [src]
+    default_tool: veriblelint
+    tools:
+      veriblelint:
+        rules:
+         - "-explicit-parameter-storage-type,-parameter-name-style,-line-length,-no-trailing-spaces"
+
+  sim_cocotb:
+    <<: *default
+    description: Cocotb unit tests
+    flow: sim
+    flow_options:
+      tool: icarus
+      cocotb_module: tb_cocotb
+      timescale: 1ns/100ps
+    filesets_append: [tb_cocotb]
+    toplevel: tb_cocotb
+    parameters:
+      - CLOCK_SPEED
+
+parameters:
+  CLOCK_SPEED:
+    datatype    : int
+    default     : 100000000
+    description : aclk frequency in Hz, must be 2 MHz or above.
+    paramtype   : vlogparam

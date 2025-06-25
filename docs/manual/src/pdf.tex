@@ -1,0 +1,21 @@
+\documentclass[usletter]{article}
+\usepackage{DejaVuSans}
+\renewcommand*\familydefault{\sfdefault}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{pdfpages}
+\usepackage[hidelinks]{hyperref}
+\begin{document}
+
+  \include{src/common.tex}
+
+  %module documentation section
+
+  \includepdf[pages=-, addtotoc={1,subsection,1,axis\_1553\_encoder,p1}, pagecommand={}]{files_axis_1553_encoder-v.pdf}
+
+  \includepdf[pages=-, addtotoc={1,subsection,1,tb\_cocotb python,p1}, pagecommand={}]{files2_tb_cocotb-py.pdf}
+
+  \includepdf[pages=-, addtotoc={1,subsection,1,tb\_cocotb verilog,p1}, pagecommand={}]{files2_tb_cocotb-v.pdf}
+
+\end{document}

@@ -1,0 +1,19 @@
+name: Check For Manual
+
+on:
+  push:
+    paths:
+      - docs/**
+
+jobs:
+  manual:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check files
+        uses: andstor/file-existence-action@v3
+        with:
+          files: "docs/manual/*.pdf, docs/manual/html/index.html"
+          fail: true
