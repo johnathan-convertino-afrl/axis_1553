@@ -49,7 +49,7 @@
  *   parity_err     - Indicates error with parity check (active high)
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
  *   sync_only      - Indicates only the sync was received and the data is invalid.
- *   rx_tx          - Active high indicates transmit, active low indicates receive state.
+ *   tx_active       - Active high indicates transmit
  *   s_axis_tdata   - Input data for UART TX.
  *   s_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
  *
@@ -96,7 +96,7 @@ module tb_cocotb #(
     output  wire         parity_err,
     output  wire         frame_err,
     output  wire         sync_only,
-    output  wire         rx_tx,
+    output  wire         tx_active,
     input   wire [15:0]  s_axis_tdata,
     input   wire [ 3:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
@@ -133,7 +133,7 @@ module tb_cocotb #(
     .parity_err(parity_err),
     .frame_err(frame_err),
     .sync_only(sync_only),
-    .rx_tx(rx_tx),
+    .tx_active(tx_active),
     .s_axis_tdata(s_axis_tdata),
     .s_axis_tuser(s_axis_tuser),
     .s_axis_tvalid(s_axis_tvalid),

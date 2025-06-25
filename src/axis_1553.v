@@ -53,7 +53,7 @@
  *   parity_err     - Indicates error with parity check for receive (active high)
  *   sync_only      - Indicates only the sync was received and the data is invalid.
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
- *   rx_tx          - Active high indicates transmit, active low indicates receive state.
+ *   tx_active       - Active high indicates transmit is in progress.
  *   s_axis_tdata   - Input data for UART TX.
  *   s_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
  *
@@ -100,7 +100,7 @@ module axis_1553 #(
     output  wire         parity_err,
     output  wire         frame_err,
     output  wire         sync_only,
-    output  wire         rx_tx,
+    output  wire         tx_active,
     input   wire [15:0]  s_axis_tdata,
     input   wire [ 3:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
@@ -227,7 +227,7 @@ module axis_1553 #(
   reg         r_sync_only;
   reg         r_frame_err;
   
-  reg  r_rx_tx;
+  reg  r_tx_active;
   reg  r_tx_delay;
   reg  r_tx_hold;
   
@@ -276,11 +276,11 @@ module axis_1553 #(
   assign s_input_data = {s_sync_tx, s_machester_ii_data_tx, s_machester_ii_parity_tx};
   
   //1553 IO
-  assign tx_diff[0] = (r_rx_tx ?  tx : 1'b0);
-  assign tx_diff[1] = (r_rx_tx ? ~tx : 1'b0);
+  assign tx_diff[0] = (r_tx_active ?  tx : 1'b0);
+  assign tx_diff[1] = (r_tx_active ? ~tx : 1'b0);
   
   // when tx is NOT ready, we are transmitting.
-  assign rx_tx = (r_tx_hold ? 1'b0 : r_rx_tx);
+  assign tx_active = (r_tx_hold ? 1'b0 : r_tx_active);
   
   // AXIS IO
   // only ready for data when the counter has hit 0 and we have not stored valid input. We wait to load data since we want to make sure all pulses are the correct length.
@@ -318,7 +318,7 @@ module axis_1553 #(
     .clk(aclk),
     .rstn(arstn),
     .start0(1'b1),
-    .clr(s_tx_ready & ~r_rx_tx),
+    .clr(s_tx_ready & ~r_tx_active),
     .hold(r_tx_hold),
     .rate(BASE_1553_SAMPLE_RATE),
     .ena(ena_tx)
@@ -436,11 +436,11 @@ module axis_1553 #(
   begin
     if(arstn == 1'b0)
     begin
-      r_rx_tx <= 1'b0;
+      r_tx_active <= 1'b0;
     end else begin
       if(ena_tx == 1'b1)
       begin
-        r_rx_tx <= ~s_tx_ready;
+        r_tx_active <= ~s_tx_ready;
       end
     end
   end

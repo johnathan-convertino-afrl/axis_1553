@@ -1,5 +1,5 @@
-# AXIS 1553 ENCODER
-### AXIS TO MIL-STD-1553 bus.
+# AXIS 1553
+### AXIS interface to and from the MIL-STD-1553 bus.
 
 ![image](docs/manual/img/AFRL.png)
 
@@ -7,9 +7,9 @@
 
   author: Jay Convertino   
   
-  date: 2021.05.17  
+  date: 2025.06.25  
   
-  details: Incoming AXI streaming data is used to populate a MIL-STD-1553 compliant signal.   
+  details: Send and Receive MIL-STD-1553 data.   
   
   license: MIT   
   
@@ -30,29 +30,29 @@
 ### DOCUMENTATION
   For detailed usage information, please navigate to one of the following sources. They are the same, just in a different format.
 
-  - [axis_1553_encoder.pdf](docs/manual/axis_1553_encoder.pdf)
-  - [github page](https://johnathan-convertino-afrl.github.io/axis_1553_encoder/)
+  - [axis_1553.pdf](docs/manual/axis_1553.pdf)
+  - [github page](https://johnathan-convertino-afrl.github.io/axis_1553/)
 
 ### PARAMETERS
 
-* CLOCK_SPEED : DEFAULT = 200000000 : clock speed of aclk to the core in hz.
-* SAMPLE_RATE : DEFAULT = 2000000   : sample rate of generated signal in hz (minimum 2 MHz).
+ *   CLOCK_SPEED      - This is the aclk frequency in Hz
+ *   RX_BAUD_DELAY    - Delay in rx baud enable. This will delay when we sample a bit (default is midpoint when rx delay is 0).
+ *   TX_BAUD_DELAY    - Delay in tx baud enable. This will delay the time the bit output starts.
 
 ### COMPONENTS
 #### SRC
 
-* axis_1553_encoder.v
+* axis_1553.v
   
 #### TB
 
-* tb_1553_enc.v
 * tb_cocotb.py
 * tb_cocotb.v
   
 ### FUSESOC
 
 * fusesoc_info.core created.
-* Simulation uses icarus to run data through the core for a fixed amount of time, no verifcation of data in/out.
+* Simulation uses icarus with cocotb
 
 #### Targets
 
