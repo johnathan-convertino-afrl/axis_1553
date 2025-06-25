@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+
+<!--Converted with LaTeX2HTML 2024 (Released January 1, 2024) -->
+<HTML lang="en">
+<HEAD>
+<TITLE>Decoding (receive) Method</TITLE>
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2024">
+
+<LINK REL="STYLESHEET" HREF="html.css">
+
+<LINK REL="previous" HREF="axis_1553_node9.html">
+<LINK REL="next" HREF="axis_1553_node11.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A
+ HREF="axis_1553_node11.html">
+<IMG WIDTH="37" HEIGHT="24" ALT="next" SRC="next.png"></A> 
+<A
+ HREF="axis_1553_node7.html">
+<IMG WIDTH="26" HEIGHT="24" ALT="up" SRC="up.png"></A> 
+<A
+ HREF="axis_1553_node9.html">
+<IMG WIDTH="63" HEIGHT="24" ALT="previous" SRC="prev.png"></A> 
+<A ID="tex2html70"
+  HREF="axis_1553_node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALT="contents" SRC="contents.png"></A>  
+<BR>
+<B> Next:</B> <A
+ HREF="axis_1553_node11.html">Building</A>
+<B> Up:</B> <A
+ HREF="axis_1553_node7.html">Architecture</A>
+<B> Previous:</B> <A
+ HREF="axis_1553_node9.html">Encoding (transmit) Method</A>
+ &nbsp; <B>  <A ID="tex2html71"
+  HREF="axis_1553_node1.html">Contents</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A ID="SECTION00033000000000000000">
+Decoding (receive) Method</A>
+</H2>
+
+<P>
+MIL-STD-1553 data is input into the SIPO core. The mod_clock_ena_gen for RX enable is cleared and kept on hold till the receive input is in a differential state. The state of the signals being identical means
+there is no data being received (or transmitted). A few different conditions can arise. If the counter is less then the needed number of bits, and the diff in RX is no longer present then a sync only detection is
+made or a frame error has happened. If the total number of bits are captured then the combinatorial XNOR decoder has its output sampled and placed into tdata and tuser properly. If the delay has been longer then 4us
+since the last message the TUSER bit will be set to 1, otherwise there was no delay and it is 0.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("cmd",["Variable"],[["CMD_DATA",,[["axis_1553",,,,0,"File:axis_1553.v:axis_1553.CMD_DATA","SystemVerilogModule:axis_1553:CMD_DATA"]]]]);

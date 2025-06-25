@@ -48,13 +48,14 @@
  *   arstn          - Negative reset for AXIS
  *   parity_err     - Indicates error with parity check (active high)
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
- *   sync_only      - Indicates only the sync was received and the data is invalid.
- *   tx_active       - Active high indicates transmit
  *   s_axis_tdata   - Input data for UART TX.
- *   s_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
+ *   s_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
  *                    Bits explained below:
  *                  --- Code
+ *                    - S   = SYNC ONLY (4)
+ *                          - 1 = Send only a sync pulse specified by TYY
+ *                          - 0 = Send normal sync + data.
  *                    - D   = DELAY ENABLED (3)
  *                          - 1 = Make sure there is a delay of 4us
  *                          - 0 = Send out immediatly
@@ -67,10 +68,13 @@
  *   s_axis_tvalid  - When set active high the input data is valid
  *   s_axis_tready  - When active high the device is ready for input data.
  *   m_axis_tdata   - Output data from UART RX
- *   m_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
+ *   m_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
  *                    Bits explained below:
  *                  --- Code
+ *                    - S   = SYNC ONLY (4)
+ *                          - 1 = Only received a sync pulse specified by TYY
+ *                          - 0 = Normal sync + data received.
  *                    - D   = DELAY BEFORE DATA (3)
  *                          - 1 = Delay of 4us or more before data
  *                          - 0 = No delay between data
@@ -82,6 +86,7 @@
  *                  ---
  *   m_axis_tvalid  - When active high the output data is valid
  *   m_axis_tready  - When set active high the output device is ready for data.
+ *   tx_active      - Active high indicates transmit is in progress.
  *   tx_diff        - transmit for 1553 (output to RX)
  *   rx_diff        - receive for 1553 (input from TX)
  */
@@ -95,16 +100,15 @@ module tb_cocotb #(
     input   wire         arstn,
     output  wire         parity_err,
     output  wire         frame_err,
-    output  wire         sync_only,
-    output  wire         tx_active,
     input   wire [15:0]  s_axis_tdata,
-    input   wire [ 3:0]  s_axis_tuser,
+    input   wire [ 4:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
     output  wire         s_axis_tready,
     output  wire [15:0]  m_axis_tdata,
-    output  wire [ 3:0]  m_axis_tuser,
+    output  wire [ 4:0]  m_axis_tuser,
     output  wire         m_axis_tvalid,
     input   wire         m_axis_tready,
+    output  wire         tx_active,
     output  wire [ 1:0]  tx_diff,
     input   wire [ 1:0]  rx_diff
   );
@@ -132,8 +136,6 @@ module tb_cocotb #(
     .arstn(arstn),
     .parity_err(parity_err),
     .frame_err(frame_err),
-    .sync_only(sync_only),
-    .tx_active(tx_active),
     .s_axis_tdata(s_axis_tdata),
     .s_axis_tuser(s_axis_tuser),
     .s_axis_tvalid(s_axis_tvalid),
@@ -142,6 +144,7 @@ module tb_cocotb #(
     .m_axis_tuser(m_axis_tuser),
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tready(m_axis_tready),
+    .tx_active(tx_active),
     .tx_diff(tx_diff),
     .rx_diff(rx_diff)
   );

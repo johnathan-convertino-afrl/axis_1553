@@ -147,11 +147,11 @@ async def increment_test_rx(dut):
 
         assert rx_frame.tdata == data, "Input data does not match output"
 
-        user_data = "{:04b}".format(rx_frame.tuser)
+        user_data = "{:05b}".format(rx_frame.tuser)
 
-        assert user_data[1:] == "100", "Wrong Sync"
+        assert user_data[2:] == "100", "Wrong Sync"
         
-        assert user_data[0] == "0", "4us Delay"
+        assert user_data[1] == "0", "4us Delay"
 
         await milstd1553_source.write_data(data)
 
@@ -159,11 +159,11 @@ async def increment_test_rx(dut):
 
         assert rx_frame.tdata == data, "Input data does not match output"
 
-        user_data = "{:04b}".format(rx_frame.tuser)
+        user_data = "{:05b}".format(rx_frame.tuser)
 
-        assert user_data[1:] == "010", "Wrong Sync"
+        assert user_data[2:] == "010", "Wrong Sync"
         
-        assert user_data[0] == "0", "4us Delay"
+        assert user_data[1] == "0", "4us Delay"
 
 
     await RisingEdge(dut.aclk)
@@ -259,11 +259,11 @@ async def increment_test_rx_delay(dut):
 
         assert rx_frame.tdata == data, "Input data does not match output"
 
-        user_data = "{:04b}".format(rx_frame.tuser)
+        user_data = "{:05b}".format(rx_frame.tuser)
 
-        assert user_data[1:] == "100", "Wrong Sync"
+        assert user_data[2:] == "100", "Wrong Sync"
         
-        assert user_data[0] == "0", "4us Delay"
+        assert user_data[1] == "0", "4us Delay"
         
         await Timer(4, units="us")
 
@@ -273,11 +273,11 @@ async def increment_test_rx_delay(dut):
 
         assert rx_frame.tdata == data, "Input data does not match output"
 
-        user_data = "{:04b}".format(rx_frame.tuser)
+        user_data = "{:05b}".format(rx_frame.tuser)
 
-        assert user_data[1:] == "010", "Wrong Sync"
+        assert user_data[2:] == "010", "Wrong Sync"
         
-        assert user_data[0] == "1", "No 4us Delay"
+        assert user_data[1] == "1", "No 4us Delay"
 
 
     await RisingEdge(dut.aclk)

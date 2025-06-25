@@ -27,8 +27,8 @@
 \subsection{Introduction}
 
 \par
-AXIS 1553 is a transmit and receive for the MIL\-STD\-1553 bus. This core can run at full duplex even though
-MIL\-STD\-1553 is half duplex. This core provides a simple axis streaming interace that uses tuser to extend the
+AXIS 1553 is a transmit and receive for the MIL-STD-1553 bus. This core can run at full duplex even though
+MIL-STD-1553 is half duplex. This core provides a simple axis streaming interace that uses tuser to extend the
 bus to allow for command and data syncs to be choosen, along with setting or indicating more than a 4us delay. 
 There are additional signals for frame errors, sync only, and parity errors. These can be used to manage issues
 that present themeselves to the core. Internally this core generates its own enables to cycle data out at its 
@@ -52,11 +52,11 @@ The following are the dependencies of the cores.
 Connect the device to your AXIS bus. TUSER is used to set or check various data status such as command/data packet mode.
 
 \par
-TDATA input should contain the 16 bit data payload. TUSER is a 4 bit command register
-that takes a description what type of data it is (command or data) and other options
-described below.
+TDATA input contains the 16 bit data payload. TUSER is a 5 bit command register
+that can take input or provide output that is a description what type of sync (command or data) 
+and other options described below.
 
-TUSER = {D,TYY} (3 downto 0)
+TUSER = {S,D,TYY} (4 downto 0)
 \begin{itemize}
 \item TYY = TYPE OF DATA
   \begin{itemize}
@@ -70,18 +70,41 @@ TUSER = {D,TYY} (3 downto 0)
     \item 1 = 4 us delay enabled.
     \item 0 = no delay between transmissions.
   \end{itemize}
+  \item S = SYNC ONLY
+  \begin{itemize}
+    \item 1 = Sync only detected
+    \item 0 = Standard message
+  \end{itemize}
 \end{itemize}
 
 \section{Architecture}
 \par
-This core is made up of a single module.
-\begin{itemize}
+This core is made up of the following modules.
+\begin{itemize} 
   \item \textbf{axis\_1553} Interface AXIS to PMOD1553 device.
+  \item \textbf{mod\_clock\_ena\_gen} Generate enable pulse at required sample rate.
+  \item \textbf{PISO} Parallel input serial output.
+  \item \textbf{SIPO} Serial input parallel output.
 \end{itemize}
 
-\subsection{Encoding Method}
+\subsection{MIL-STD-1553}
 \par
+In this core the data is encoded using Manchester II (G.E. Thomas) method. IEEE 802.3 uses a XOR with a clock and data. Manchester II uses a XNOR clock and data. The sync pulse is a non-machester compliant
+part of the transmission that is only for detecting the start of the frame and what type of frame is incoming. The two types are data, and command/status. All messages are terminated with a odd parity bit.
 
+\subsection{Encoding (transmit) Method}
+\par
+MIL-STD-1553 data is generated using a combinatorial process for the XNOR. This XNOR is performed using the data and a synthetic clock of 1 MHz at a 2 MHz sample rate (minimum for the digital waveform).
+This is then contatenated with a pre-defined sync that is choosen based upon TUSER, with a generated parity bit XNOR with the synth clock. This is then loaded into the PISO core and cycled out at the sample
+rate by the mod\_clock\_ena\_gen for tx enable pulse. If TUSER had set a delay the mod\_clock\_ena\_gen for tx will be put into a hold state till the counter has finished. Once all the data has been sent the
+AXIS input will become ready again. The transmit output will set the differential lines to zero meaning there is no difference in output and there is no data.
+
+\subsection{Decoding (receive) Method}
+\par
+MIL-STD-1553 data is input into the SIPO core. The mod\_clock\_ena\_gen for RX enable is cleared and kept on hold till the receive input is in a differential state. The state of the signals being identical means
+there is no data being received (or transmitted). A few different conditions can arise. If the counter is less then the needed number of bits, and the diff in RX is no longer present then a sync only detection is
+made or a frame error has happened. If the total number of bits are captured then the combinatorial XNOR decoder has its output sampled and placed into tdata and tuser properly. If the delay has been longer then 4us
+since the last message the TUSER bit will be set to 1, otherwise there was no delay and it is 0.
 
 \section{Building}
 
@@ -146,7 +169,7 @@ Then you must use the cocotb sim target. The targets above can be run with vario
 \section{Module Documentation} \label{Module Documentation}
 
 \begin{itemize}
-\item \textbf{axis\_1553\_encoder} Interfaces AXIS to the PMOD1553.\\
+\item \textbf{axis\_1553} Interfaces AXIS to the PMOD1553.\\
 \end{itemize}
 The next sections document the module in great detail.
 

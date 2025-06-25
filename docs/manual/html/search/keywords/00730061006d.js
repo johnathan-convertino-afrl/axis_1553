@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("sam",["Variable"],[["SAMPLES_PER_MHZ",,[["axis_1553",,,,0,"File:axis_1553.v:axis_1553.SAMPLES_PER_MHZ","SystemVerilogModule:axis_1553:SAMPLES_PER_MHZ"]]]]);

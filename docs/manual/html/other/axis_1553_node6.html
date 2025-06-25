@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+
+<!--Converted with LaTeX2HTML 2024 (Released January 1, 2024) -->
+<HTML lang="en">
+<HEAD>
+<TITLE>In a Project</TITLE>
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2024">
+
+<LINK REL="STYLESHEET" HREF="html.css">
+
+<LINK REL="previous" HREF="axis_1553_node4.html">
+<LINK REL="next" HREF="axis_1553_node7.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A
+ HREF="axis_1553_node7.html">
+<IMG WIDTH="37" HEIGHT="24" ALT="next" SRC="next.png"></A> 
+<A
+ HREF="axis_1553_node2.html">
+<IMG WIDTH="26" HEIGHT="24" ALT="up" SRC="up.png"></A> 
+<A
+ HREF="axis_1553_node5.html">
+<IMG WIDTH="63" HEIGHT="24" ALT="previous" SRC="prev.png"></A> 
+<A ID="tex2html59"
+  HREF="axis_1553_node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALT="contents" SRC="contents.png"></A>  
+<BR>
+<B> Next:</B> <A
+ HREF="axis_1553_node7.html">Architecture</A>
+<B> Up:</B> <A
+ HREF="axis_1553_node2.html">Usage</A>
+<B> Previous:</B> <A
+ HREF="axis_1553_node5.html">fusesoc_info Depenecies</A>
+ &nbsp; <B>  <A ID="tex2html60"
+  HREF="axis_1553_node1.html">Contents</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A ID="SECTION00023000000000000000">
+In a Project</A>
+</H2>
+
+<P>
+Connect the device to your AXIS bus. TUSER is used to set or check various data status such as command/data packet mode.
+
+<P>
+TDATA input contains the 16 bit data payload. TUSER is a 5 bit command register
+that can take input or provide output that is a description what type of sync (command or data) 
+and other options described below.
+
+<P>
+TUSER = S,D,TYY (4 downto 0)
+
+<UL>
+<LI>TYY = TYPE OF DATA
+  
+<UL>
+<LI>000 N/A (IF DATA VALID, SYNC IS NOT VALID AND DATA IS NOT AS WELL)
+</LI>
+<LI>001 REG (NOT IMPLEMENTED)
+</LI>
+<LI>010 DATA
+</LI>
+<LI>100 CMD/STATUS
+  
+</LI>
+</UL>
+</LI>
+<LI>D = DELAY ENABLED
+  
+<UL>
+<LI>1 = 4 us delay enabled.
+</LI>
+<LI>0 = no delay between transmissions.
+  
+</LI>
+</UL>
+</LI>
+<LI>S = SYNC ONLY
+  
+<UL>
+<LI>1 = Sync only detected
+</LI>
+<LI>0 = Standard message
+  
+</LI>
+</UL>
+</LI>
+</UL>
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

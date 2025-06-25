@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+
+<!--Converted with LaTeX2HTML 2024 (Released January 1, 2024) -->
+<HTML lang="en">
+<HEAD>
+<TITLE>Encoding (transmit) Method</TITLE>
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2024">
+
+<LINK REL="STYLESHEET" HREF="html.css">
+
+<LINK REL="next" HREF="axis_1553_node10.html">
+<LINK REL="previous" HREF="axis_1553_node8.html">
+<LINK REL="next" HREF="axis_1553_node10.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A
+ HREF="axis_1553_node10.html">
+<IMG WIDTH="37" HEIGHT="24" ALT="next" SRC="next.png"></A> 
+<A
+ HREF="axis_1553_node7.html">
+<IMG WIDTH="26" HEIGHT="24" ALT="up" SRC="up.png"></A> 
+<A
+ HREF="axis_1553_node8.html">
+<IMG WIDTH="63" HEIGHT="24" ALT="previous" SRC="prev.png"></A> 
+<A ID="tex2html68"
+  HREF="axis_1553_node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALT="contents" SRC="contents.png"></A>  
+<BR>
+<B> Next:</B> <A
+ HREF="axis_1553_node10.html">Decoding (receive) Method</A>
+<B> Up:</B> <A
+ HREF="axis_1553_node7.html">Architecture</A>
+<B> Previous:</B> <A
+ HREF="axis_1553_node8.html">MIL-STD-1553</A>
+ &nbsp; <B>  <A ID="tex2html69"
+  HREF="axis_1553_node1.html">Contents</A></B> 
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A ID="SECTION00032000000000000000">
+Encoding (transmit) Method</A>
+</H2>
+
+<P>
+MIL-STD-1553 data is generated using a combinatorial process for the XNOR. This XNOR is performed using the data and a synthetic clock of 1 MHz at a 2 MHz sample rate (minimum for the digital waveform).
+This is then contatenated with a pre-defined sync that is choosen based upon TUSER, with a generated parity bit XNOR with the synth clock. This is then loaded into the PISO core and cycled out at the sample
+rate by the mod_clock_ena_gen for tx enable pulse. If TUSER had set a delay the mod_clock_ena_gen for tx will be put into a hold state till the counter has finished. Once all the data has been sent the
+AXIS input will become ready again. The transmit output will set the differential lines to zero meaning there is no difference in output and there is no data.
+
+<P>
+<BR><HR>
+
+</BODY>
+</HTML>

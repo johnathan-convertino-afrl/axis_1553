@@ -51,14 +51,15 @@
  *   aclk           - Clock for AXIS
  *   arstn          - Negative reset for AXIS
  *   parity_err     - Indicates error with parity check for receive (active high)
- *   sync_only      - Indicates only the sync was received and the data is invalid.
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
- *   tx_active       - Active high indicates transmit is in progress.
  *   s_axis_tdata   - Input data for UART TX.
- *   s_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
+ *   s_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
  *                    Bits explained below:
  *                  --- Code
+ *                    - S   = SYNC ONLY (4)
+ *                          - 1 = Send only a sync pulse specified by TYY
+ *                          - 0 = Send normal sync + data.
  *                    - D   = DELAY ENABLED (3)
  *                          - 1 = Make sure there is a delay of 4us
  *                          - 0 = Send out immediatly
@@ -71,10 +72,13 @@
  *   s_axis_tvalid  - When set active high the input data is valid
  *   s_axis_tready  - When active high the device is ready for input data.
  *   m_axis_tdata   - Output data from UART RX
- *   m_axis_tuser   - Information about the AXIS data {D,TYY} (3:0)
+ *   m_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
  *                    Bits explained below:
  *                  --- Code
+ *                    - S   = SYNC ONLY (4)
+ *                          - 1 = Only received a sync pulse specified by TYY
+ *                          - 0 = Normal sync + data received.
  *                    - D   = DELAY BEFORE DATA (3)
  *                          - 1 = Delay of 4us or more before data
  *                          - 0 = No delay between data
@@ -86,6 +90,7 @@
  *                  ---
  *   m_axis_tvalid  - When active high the output data is valid
  *   m_axis_tready  - When set active high the output device is ready for data.
+ *   tx_active      - Active high indicates transmit is in progress.
  *   tx_diff        - transmit for 1553 (output to RX)
  *   rx_diff        - receive for 1553 (input from TX)
  */
@@ -99,16 +104,15 @@ module axis_1553 #(
     input   wire         arstn,
     output  wire         parity_err,
     output  wire         frame_err,
-    output  wire         sync_only,
-    output  wire         tx_active,
     input   wire [15:0]  s_axis_tdata,
-    input   wire [ 3:0]  s_axis_tuser,
+    input   wire [ 4:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
     output  wire         s_axis_tready,
     output  wire [15:0]  m_axis_tdata,
-    output  wire [ 3:0]  m_axis_tuser,
+    output  wire [ 4:0]  m_axis_tuser,
     output  wire         m_axis_tvalid,
     input   wire         m_axis_tready,
+    output  wire         tx_active,
     output  wire [ 1:0]  tx_diff,
     input   wire [ 1:0]  rx_diff
   );
@@ -220,19 +224,19 @@ module axis_1553 #(
   wire [TOTAL_SYNTH_BITS_PER_TRANS-1:0]   s_output_data;
   
   reg  [15:0] r_m_axis_tdata;
-  reg  [ 3:0] r_m_axis_tuser;
+  reg  [ 4:0] r_m_axis_tuser;
   reg         r_m_axis_tvalid;
   
-  reg         r_parity_err;
-  reg         r_sync_only;
-  reg         r_frame_err;
+  reg  r_parity_err;
+  reg  r_sync_only;
+  reg  r_frame_err;
   
   reg  r_tx_active;
   reg  r_tx_delay;
   reg  r_tx_hold;
   
-  reg [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_tx;
-  reg [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_rx;
+  reg  [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_tx;
+  reg  [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_rx;
   
   reg  r_rx_load;
   reg  r_rx_delay;
@@ -273,11 +277,11 @@ module axis_1553 #(
   assign s_sync_rx = s_output_data[TOTAL_SYNTH_BITS_PER_TRANS-1:TOTAL_SYNTH_BITS_PER_TRANS-SYNTH_SYNC_BITS_PER_TRANS];
   
   //CONCATENATE PIECES FOR FULL 1553 MESSAGE
-  assign s_input_data = {s_sync_tx, s_machester_ii_data_tx, s_machester_ii_parity_tx};
+  assign s_input_data = {s_sync_tx, (s_axis_tuser[4] ? {SYNTH_DATA_BITS_PER_TRANS{1'b0}} : s_machester_ii_data_tx), s_machester_ii_parity_tx};
   
   //1553 IO
-  assign tx_diff[0] = (r_tx_active ?  tx : 1'b0);
-  assign tx_diff[1] = (r_tx_active ? ~tx : 1'b0);
+  assign tx_diff[0] = (r_tx_active                                                                ?  tx : 1'b0);
+  assign tx_diff[1] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ? ~tx : 1'b0);
   
   // when tx is NOT ready, we are transmitting.
   assign tx_active = (r_tx_hold ? 1'b0 : r_tx_active);
@@ -297,8 +301,6 @@ module axis_1553 #(
   
   // output parity error when valid data is present.
   assign parity_err = r_parity_err;
-  
-  assign sync_only  = r_sync_only;
   
   assign frame_err  = r_frame_err;
   
@@ -409,13 +411,16 @@ module axis_1553 #(
     begin
       r_tx_delay <= 1'b0;
       r_tx_hold  <= 1'b0;
+      
+      r_sync_only <= 1'b0;
     end else begin
       r_tx_hold <= 1'b0;
       
       // both must be active high (1)
       if(s_axis_tvalid & s_tx_ready)
       begin
-        r_tx_delay <= s_axis_tuser[3];
+        r_tx_delay  <= s_axis_tuser[3];
+        r_sync_only <= s_axis_tuser[4];
       end
       
       if(s_tx_ready == 1'b0 && r_tx_delay == 1'b1)
@@ -480,7 +485,6 @@ module axis_1553 #(
       r_m_axis_tvalid <= 1'b0;
       
       r_parity_err  <= 1'b0;
-      r_sync_only   <= 1'b0;
       r_frame_err   <= 1'b0;
     end else begin
       r_rx_load <= 1'b0;
@@ -491,7 +495,6 @@ module axis_1553 #(
         r_m_axis_tuser  <= 0;
         r_m_axis_tvalid <= 1'b0;
         r_parity_err    <= 1'b0;
-        r_sync_only     <= 1'b0;
         r_frame_err     <= 1'b0;
       end
       
@@ -510,27 +513,24 @@ module axis_1553 #(
           
           r_parity_err    <= 1'b0;
           
-          if(s_rx_counter == SYNTH_SYNC_BITS_PER_TRANS)
+          if(s_rx_counter != SYNTH_SYNC_BITS_PER_TRANS)
           begin
-            r_sync_only <= 1'b1;
-          end else begin
             r_frame_err <= 1'b1;
           end
           
           case(s_output_data[SYNTH_SYNC_BITS_PER_TRANS-1:0])
             SYNC_CMD_STAT:
             begin
-              r_m_axis_tuser <= {r_rx_delay, CMD_CMND};
+              r_m_axis_tuser <= {1'b1, r_rx_delay, CMD_CMND};
             end
             SYNC_DATA:
             begin
-              r_m_axis_tuser <= {r_rx_delay, CMD_DATA};
+              r_m_axis_tuser <= {1'b1, r_rx_delay, CMD_DATA};
             end
             default:
             begin
               // destroy sync only if sync is invalid and call it a frame error instead.
-              r_m_axis_tuser <= {r_rx_delay, 3'b000};
-              r_sync_only    <= 1'b0;
+              r_m_axis_tuser <= {1'b0, r_rx_delay, 3'b000};
               r_frame_err    <= 1'b1;
             end
           endcase
@@ -550,20 +550,18 @@ module axis_1553 #(
         
         r_frame_err  <= |s_frame_err;
         
-        r_sync_only  <= 1'b0;
-        
         case(s_sync_rx)
           SYNC_CMD_STAT:
           begin
-            r_m_axis_tuser <= {r_rx_delay, CMD_CMND};
+            r_m_axis_tuser <= {1'b0, r_rx_delay, CMD_CMND};
           end
           SYNC_DATA:
           begin
-            r_m_axis_tuser <= {r_rx_delay, CMD_DATA};
+            r_m_axis_tuser <= {1'b0, r_rx_delay, CMD_DATA};
           end
           default:
           begin
-            r_m_axis_tuser <= {r_rx_delay, 3'b000};
+            r_m_axis_tuser <= {1'b0, r_rx_delay, 3'b000};
             r_frame_err    <= 1'b1;
           end
         endcase

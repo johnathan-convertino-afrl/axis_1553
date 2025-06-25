@@ -81,10 +81,10 @@ Home Page: ../html/other/html.html
 # ------------------------------------------------------------------------
 
 Source Folder: ../../../src
-   Name: axis_1553_encoder
+   Name: src
 
 Source Folder 2: ../../../tb
-   Name: tb_axis_1553_encoder
+   Name: tb
 
 
 # This is where you tell Natural Docs which folders it should scan for source

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("par",["Variable"],[["PARITY_BITS_PER_TRANS",,[["axis_1553",,,,0,"File:axis_1553.v:axis_1553.PARITY_BITS_PER_TRANS","SystemVerilogModule:axis_1553:PARITY_BITS_PER_TRANS"]]]]);
