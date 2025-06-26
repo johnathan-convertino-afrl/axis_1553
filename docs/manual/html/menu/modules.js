@@ -1,1 +1,1 @@
-﻿NDMenu.OnSectionLoaded("modules.js",[[1,"axis_1553"],[1,"dut"],[1,"inst_piso"],[1,"inst_sipo"],[1,"tb_cocotb"],[1,"uart_baud_gen_rx"],[1,"uart_baud_gen_tx"]]);
+﻿NDMenu.OnSectionLoaded("modules.js",[[1,"axis_1553"],[1,"clk_gen_rx"],[1,"clk_gen_tx"],[1,"dut"],[1,"inst_piso"],[1,"inst_sipo"],[1,"tb_cocotb"]]);

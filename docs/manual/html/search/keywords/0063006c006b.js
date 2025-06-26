@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("clk",["Module"],[["clk_gen_rx",,[[,,,,0,"File:axis_1553.v:clk_gen_rx","SystemVerilogModule:clk_gen_rx"]]],["clk_gen_tx",,[[,,,,0,"File:axis_1553.v:clk_gen_tx","SystemVerilogModule:clk_gen_tx"]]]]);

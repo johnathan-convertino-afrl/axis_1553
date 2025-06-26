@@ -1,0 +1,1 @@
+﻿NDSummary.OnToolTipsLoaded("SystemVerilogModule:clk_gen_tx",{63:"<div class=\"NDToolTip TModule LSystemVerilog\"><div class=\"TTSummary\">Generates TX clock at sample rate (BASE_1553_SAMPLE_RATE).</div></div>"});

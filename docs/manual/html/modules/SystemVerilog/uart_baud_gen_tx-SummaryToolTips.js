@@ -1,1 +1,0 @@
-﻿NDSummary.OnToolTipsLoaded("SystemVerilogModule:uart_baud_gen_tx",{52:"<div class=\"NDToolTip TModule LSystemVerilog\"><div class=\"TTSummary\">Generates TX BAUD rate for UART modules using modulo divide method.</div></div>"});

@@ -193,51 +193,67 @@ module axis_1553 #(
   genvar xnor_index;
   genvar cycle_index;
   
+  // mod clock control
   wire ena_tx;
   wire ena_rx;
   wire s_clr_clk_rx;
   
+  // single ended tx
   wire tx;
-  wire rx;
   
+  // output of parity check or generate
   wire s_parity_bit_tx;
   wire s_parity_bit_rx;
   
+  // when ready for transmit, ready for data input
   wire s_tx_ready;
   
+  //concatenate transmit data
   wire [TOTAL_SYNTH_BITS_PER_TRANS-1:0]   s_input_data;
   
+  //transmit data is encoded from the axis input to the following
   wire [SYNTH_DATA_BITS_PER_TRANS-1:0]    s_machester_ii_data_tx;
   wire [SYNTH_PARITY_BITS_PER_TRANS-1:0]  s_machester_ii_parity_tx;
   wire [SYNTH_SYNC_BITS_PER_TRANS-1:0]    s_sync_tx;
   
+  //receive data is split into the following and decoded
   wire [SYNTH_DATA_BITS_PER_TRANS-1:0]    s_machester_ii_data_rx;
   wire [SYNTH_PARITY_BITS_PER_TRANS-1:0]  s_machester_ii_parity_rx;
   wire [SYNTH_SYNC_BITS_PER_TRANS-1:0]    s_sync_rx;
   
+  //results of decoded receive data.
   wire [DATA_BITS_PER_TRANS-1:0]          s_decoded_data_rx;
   wire [DATA_BITS_PER_TRANS-1:0]          s_frame_err;
   
+  //concatenated receive data
+  wire [TOTAL_SYNTH_BITS_PER_TRANS-1:0]   s_output_data;
+  
+  //SIPO/PISO counter 
   wire [ 7:0] s_tx_counter;
   wire [ 7:0] s_rx_counter;
   
-  wire [TOTAL_SYNTH_BITS_PER_TRANS-1:0]   s_output_data;
-  
+  // store output axis data till slave is ready
   reg  [15:0] r_m_axis_tdata;
   reg  [ 4:0] r_m_axis_tuser;
   reg         r_m_axis_tvalid;
   
+  // registers for errors in receive
   reg  r_parity_err;
-  reg  r_sync_only;
   reg  r_frame_err;
   
+  // sync only request presented for tx
+  reg  r_sync_only;
+  
+  // control of the PISO/clock gen TX
   reg  r_tx_active;
   reg  r_tx_delay;
   reg  r_tx_hold;
   
+  // Counters for the 4us delay
   reg  [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_tx;
   reg  [clogb2(DELAY_TIME)-1:0]  r_delay_cnt_rx;
   
+  // control of the SIPO/clock gen RX
   reg  r_rx_load;
   reg  r_rx_delay;
   
@@ -263,12 +279,13 @@ module axis_1553 #(
   endgenerate
   
   // PARITY GEN
-  // create parity bit
+  // generate parity bit tx.
   assign s_parity_bit_tx = ^s_axis_tdata ^ 1'b1; //odd
   
-  assign s_machester_ii_parity_rx = s_output_data[SYNTH_PARITY_BITS_PER_TRANS-1:0];
-  
   assign s_machester_ii_parity_tx = ~(SYNTH_CLK[BIT_RATE_PER_MHZ-1:0] ^ {SYNTH_PARITY_BITS_PER_TRANS{s_parity_bit_tx}});
+  
+  // recover parity bit rx
+  assign s_machester_ii_parity_rx = s_output_data[SYNTH_PARITY_BITS_PER_TRANS-1:0];
   
   assign s_parity_bit_rx = ~(&(SYNTH_CLK[BIT_RATE_PER_MHZ-1:0] ^ s_machester_ii_parity_rx));
   
@@ -277,14 +294,14 @@ module axis_1553 #(
   
   assign s_sync_rx = s_output_data[TOTAL_SYNTH_BITS_PER_TRANS-1:TOTAL_SYNTH_BITS_PER_TRANS-SYNTH_SYNC_BITS_PER_TRANS];
 
-  //CONCATENATE PIECES FOR FULL 1553 MESSAGE
+  // Concatenate TX encoded data into a single input for PISO
   assign s_input_data = {s_sync_tx, s_machester_ii_data_tx, s_machester_ii_parity_tx};
   
-  //1553 IO
+  //1553 IO for transmit, if we want a sync only just block out the rest of the transmission.
   assign tx_diff[0] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ?  tx : 1'b0);
   assign tx_diff[1] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ? ~tx : 1'b0);
   
-  // when tx is NOT ready, we are transmitting.
+  // When TX is not on hold for delay use tx_active to enable transmit.
   assign tx_active = (r_tx_hold ? 1'b0 : r_tx_active);
   
   // AXIS IO
@@ -292,10 +309,10 @@ module axis_1553 #(
   assign s_axis_tready = s_tx_ready;
   assign s_tx_ready = (s_tx_counter == 0 ? 1'b1 : 1'b0) & arstn;
   
-  // output that the current m_axis_tdata is valid.
+  // output that the current m_axis_tdata/tuser is valid.
   assign m_axis_tvalid = r_m_axis_tvalid;
   
-  // output data, this doesr_tx_delayn't matter till valid is set.
+  // output data
   assign m_axis_tdata = r_m_axis_tdata;
   
   assign m_axis_tuser = r_m_axis_tuser;
@@ -303,6 +320,7 @@ module axis_1553 #(
   // output parity error when valid data is present.
   assign parity_err = r_parity_err;
   
+  // frame error for manchester encoding of 2'b11 or 2'b00
   assign frame_err  = r_frame_err;
   
   // clock stays cleared when no signal diff (xnor)
@@ -310,9 +328,9 @@ module axis_1553 #(
 
   //Group: Instantiated Modules
   /*
-   * Module: uart_baud_gen_tx
+   * Module: clk_gen_tx
    *
-   * Generates TX BAUD rate for UART modules using modulo divide method.
+   * Generates TX clock at sample rate (BASE_1553_SAMPLE_RATE).
    */
   mod_clock_ena_gen #(
     .CLOCK_SPEED(CLOCK_SPEED),
@@ -328,14 +346,14 @@ module axis_1553 #(
   );
   
   /*
-   * Module: uart_baud_gen_rx
+   * Module: clk_gen_rx
    *
-   * Generates RX BAUD rate for UART modules using modulo divide method.
+   * Generates RX clock at sample rate (BASE_1553_SAMPLE_RATE).
    */
   mod_clock_ena_gen #(
     .CLOCK_SPEED(CLOCK_SPEED),
     .DELAY(RX_BAUD_DELAY)
-  ) uart_baud_gen_rx (
+  ) clk_gen_rx (
     .clk(aclk),
     .rstn(arstn),
     .start0(1'b0),
@@ -406,7 +424,11 @@ module axis_1553 #(
     end
   end
   
-  // setup for delay
+  // Use the above delay counter if tuser bits for tx delay are set
+  // this will also register that we want a sync only from tuser.
+  // if we are not ready and tx delay is set the clock gen will be put
+  // on hold till the counter hits zero. Then delay will be cleared and
+  // the hold removed.
   always @(posedge aclk) begin
     if(arstn == 1'b0)
     begin
@@ -437,7 +459,7 @@ module axis_1553 #(
     end
   end
   
-  // rx_tx needs to be a cycle behind.
+  // r_tx_active needs to be a cycle behind s_tx_tready.
   always @(posedge aclk)
   begin
     if(arstn == 1'b0)
@@ -451,7 +473,7 @@ module axis_1553 #(
     end
   end
   
-  // check for delay from start to end of received data (4us or more between receive).
+  // check for delay between received data (4us or more between receive).
   always @(posedge aclk) begin
     if(arstn == 1'b0)
     begin
@@ -472,8 +494,7 @@ module axis_1553 #(
     end
   end
   
-  // rx diff detection broken, will just keep going, need to wait till diff is done.
-  // for detection of incoming transmissions (RX)
+  // rx data handler based upon SIPO counter values
   always @(posedge aclk)
   begin
     if(arstn == 1'b0)
@@ -490,6 +511,7 @@ module axis_1553 #(
     end else begin
       r_rx_load <= 1'b0;
       
+      // if ready, clear previous data as it has been read.
       if(m_axis_tready == 1'b1)
       begin
         r_m_axis_tdata  <= 0;
@@ -499,14 +521,17 @@ module axis_1553 #(
         r_frame_err     <= 1'b0;
       end
       
+      // if zero, and the counter is zero and delay has happened.
       if(s_rx_counter == 0 && r_delay_cnt_rx == 0)
       begin
         r_rx_delay <= 1'b1;
       end
       
-      // receive only got a sync
+      // receive is not active
       if(s_clr_clk_rx == 1'b1)
       begin
+        // counter is greater than zero
+        // if it is all the needed elments the logic below would blow this out.
         if(s_rx_counter > 0)
         begin
           r_m_axis_tdata  <= 16'hDEAD;
@@ -514,11 +539,13 @@ module axis_1553 #(
           
           r_parity_err    <= 1'b0;
           
+          // if its not the total number of sync only bits, this is a frame error for sure.
           if(s_rx_counter != SYNTH_SYNC_BITS_PER_TRANS)
           begin
             r_frame_err <= 1'b1;
           end
           
+          //check if there is a valid sync. If so then its a sync only message.
           case(s_output_data[SYNTH_SYNC_BITS_PER_TRANS-1:0])
             SYNC_CMD_STAT:
             begin
@@ -536,21 +563,25 @@ module axis_1553 #(
             end
           endcase
           
+          // reset delay and set load to rest SIPO.
           r_rx_delay <= 1'b0;
           r_rx_load  <= 1'b1;
         end
       end
       
-      // receive is finished
+      // receive is finished, all bits accounted for. Wait for load to complete if it has been set.
       if(s_rx_counter == TOTAL_SYNTH_BITS_PER_TRANS && r_rx_load != 1'b1)
       begin
+        // capture current data
         r_m_axis_tdata  <= s_decoded_data_rx;
         r_m_axis_tvalid <= 1'b1;
         
+        // check parity against received parity bit.
         r_parity_err <= ^s_decoded_data_rx ^ 1'b1 ^ s_parity_bit_rx; //odd
         
         r_frame_err  <= |s_frame_err;
         
+        // check the sync type
         case(s_sync_rx)
           SYNC_CMD_STAT:
           begin
@@ -563,10 +594,10 @@ module axis_1553 #(
           default:
           begin
             r_m_axis_tuser <= {1'b0, r_rx_delay, 3'b000};
-            r_frame_err    <= 1'b1;
           end
         endcase
         
+        // reset delay and set load to rest SIPO.
         r_rx_delay <= 1'b0;
         r_rx_load  <= 1'b1;
       end
