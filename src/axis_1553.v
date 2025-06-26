@@ -255,9 +255,10 @@ module axis_1553 #(
     
     //future, check if previous and current bit are equal. If so, frame error
     for(xnor_index = 0; xnor_index < DATA_BITS_PER_TRANS; xnor_index = xnor_index + 1) begin : gen_DATA_MACHESTER_II_rx
+      //check if the two bits for the data are identical, if so we have a error in the manchester encoding (frame error).
       assign s_frame_err[xnor_index] = ~(s_machester_ii_data_rx[BIT_RATE_PER_MHZ*xnor_index] ^ s_machester_ii_data_rx[(BIT_RATE_PER_MHZ*xnor_index)+1]);
       //just get every other, if there is a bad couple of bits s_frame_err will pickup on it (either bit will get same result)
-      assign s_decoded_data_rx[xnor_index] = ~(SYNTH_CLK[xnor_index*2] ^ s_machester_ii_data_rx[xnor_index*2]);
+      assign s_decoded_data_rx[xnor_index] = ~(SYNTH_CLK[xnor_index*BIT_RATE_PER_MHZ] ^ s_machester_ii_data_rx[xnor_index*BIT_RATE_PER_MHZ]);
     end
   endgenerate
   
