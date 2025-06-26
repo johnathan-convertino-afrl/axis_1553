@@ -198,6 +198,9 @@ module axis_1553 #(
   wire ena_rx;
   wire s_clr_clk_rx;
   
+  // diff line correct?
+  wire s_rx_diff_active;
+  
   // single ended tx
   wire tx;
   
@@ -324,7 +327,9 @@ module axis_1553 #(
   assign frame_err  = r_frame_err;
   
   // clock stays cleared when no signal diff (xnor)
-  assign s_clr_clk_rx = ~^rx_diff;
+  assign s_rx_diff_active = ^rx_diff;
+  // when the diff is not active, clear the counter.
+  assign s_clr_clk_rx = (s_rx_counter == 0 ? ~s_rx_diff_active : 1'b0);
 
   //Group: Instantiated Modules
   /*
@@ -527,8 +532,8 @@ module axis_1553 #(
         r_rx_delay <= 1'b1;
       end
       
-      // receive is not active
-      if(s_clr_clk_rx == 1'b1)
+      // receive is not active and we have made a midpoint sample.
+      if(s_rx_diff_active == 1'b0 && ena_rx)
       begin
         // counter is greater than zero
         // if it is all the needed elments the logic below would blow this out.
