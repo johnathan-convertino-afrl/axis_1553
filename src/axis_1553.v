@@ -248,16 +248,16 @@ module axis_1553 #(
   //xnor data with synth clock for MANCHESTER II (G.E. THOMAS) XNOR
   generate
     for(xnor_index = 0; xnor_index < DATA_BITS_PER_TRANS; xnor_index = xnor_index + 1) begin : gen_DATA_MACHESTER_II_tx
-      for(cycle_index = (BIT_RATE_PER_MHZ*xnor_index); cycle_index < (BIT_RATE_PER_MHZ*xnor_index)+(BIT_RATE_PER_MHZ); cycle_index = cycle_index + 1)
+      for(cycle_index = (BIT_RATE_PER_MHZ*xnor_index); cycle_index < (BIT_RATE_PER_MHZ*xnor_index)+(BIT_RATE_PER_MHZ); cycle_index = cycle_index + 1) begin : gen_DATA_PER_CYCLE_tx
         assign s_machester_ii_data_tx[cycle_index] = ~(SYNTH_CLK[cycle_index] ^ s_axis_tdata[xnor_index]);
+      end
     end
     
     //future, check if previous and current bit are equal. If so, frame error
     for(xnor_index = 0; xnor_index < DATA_BITS_PER_TRANS; xnor_index = xnor_index + 1) begin : gen_DATA_MACHESTER_II_rx
       assign s_frame_err[xnor_index] = ~(s_machester_ii_data_rx[BIT_RATE_PER_MHZ*xnor_index] ^ s_machester_ii_data_rx[(BIT_RATE_PER_MHZ*xnor_index)+1]);
-      
-      for(cycle_index = (BIT_RATE_PER_MHZ*xnor_index); cycle_index < (BIT_RATE_PER_MHZ*xnor_index)+(BIT_RATE_PER_MHZ); cycle_index = cycle_index + 1)
-        assign s_decoded_data_rx[xnor_index] = ~(SYNTH_CLK[cycle_index] ^ s_machester_ii_data_rx[cycle_index]);
+      //just get every other, if there is a bad couple of bits s_frame_err will pickup on it (either bit will get same result)
+      assign s_decoded_data_rx[xnor_index] = ~(SYNTH_CLK[xnor_index*2] ^ s_machester_ii_data_rx[xnor_index*2]);
     end
   endgenerate
   
@@ -275,12 +275,12 @@ module axis_1553 #(
   assign s_sync_tx = (s_axis_tuser[2:0] == CMD_DATA ? SYNC_DATA : SYNC_CMD_STAT);
   
   assign s_sync_rx = s_output_data[TOTAL_SYNTH_BITS_PER_TRANS-1:TOTAL_SYNTH_BITS_PER_TRANS-SYNTH_SYNC_BITS_PER_TRANS];
-  
+
   //CONCATENATE PIECES FOR FULL 1553 MESSAGE
-  assign s_input_data = {s_sync_tx, (s_axis_tuser[4] ? {SYNTH_DATA_BITS_PER_TRANS{1'b0}} : s_machester_ii_data_tx), s_machester_ii_parity_tx};
+  assign s_input_data = {s_sync_tx, s_machester_ii_data_tx, s_machester_ii_parity_tx};
   
   //1553 IO
-  assign tx_diff[0] = (r_tx_active                                                                ?  tx : 1'b0);
+  assign tx_diff[0] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ?  tx : 1'b0);
   assign tx_diff[1] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ? ~tx : 1'b0);
   
   // when tx is NOT ready, we are transmitting.
