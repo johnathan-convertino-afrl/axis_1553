@@ -96,9 +96,9 @@ async def increment_test_tx(dut):
 
         await axis_source.send(tx_frame)
 
-        await FallingEdge(dut.tx_activen)
+        await RisingEdge(dut.tx_active)
 
-        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
+        assert dut.tx_active.value.integer == 1, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_cmd()
 
@@ -108,9 +108,9 @@ async def increment_test_tx(dut):
         
         await axis_source.send(tx_frame)
         
-        await FallingEdge(dut.tx_activen)
+        await RisingEdge(dut.tx_active)
         
-        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
+        assert dut.tx_active.value.integer == 1, "Output is not enabled"
         
         rx_data = await milstd1553_sink.read_data()
         
@@ -198,9 +198,9 @@ async def increment_test_tx_delay(dut):
 
         await axis_source.send(tx_frame)
 
-        await FallingEdge(dut.tx_activen)
+        await RisingEdge(dut.tx_active)
 
-        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
+        assert dut.tx_active.value.integer == 1, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_cmd()
 
@@ -212,7 +212,7 @@ async def increment_test_tx_delay(dut):
         
         start_time = get_sim_time("us")
 
-        await FallingEdge(dut.tx_activen)
+        await RisingEdge(dut.tx_active)
         
         end_time = get_sim_time("us")
 
@@ -220,9 +220,7 @@ async def increment_test_tx_delay(dut):
 
         assert delay_time >= 4, "Delay less then 4 us"
         
-        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
-
-        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
+        assert dut.tx_active.value.integer == 1, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_data()
 
