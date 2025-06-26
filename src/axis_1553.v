@@ -90,7 +90,7 @@
  *                  ---
  *   m_axis_tvalid  - When active high the output data is valid
  *   m_axis_tready  - When set active high the output device is ready for data.
- *   tx_active      - Active high indicates transmit is in progress.
+ *   tx_activen     - Active low indicates transmit is in progress.
  *   tx_diff        - transmit for 1553 (output to RX)
  *   rx_diff        - receive for 1553 (input from TX)
  */
@@ -112,7 +112,7 @@ module axis_1553 #(
     output  wire [ 4:0]  m_axis_tuser,
     output  wire         m_axis_tvalid,
     input   wire         m_axis_tready,
-    output  wire         tx_active,
+    output  wire         tx_activen,
     output  wire [ 1:0]  tx_diff,
     input   wire [ 1:0]  rx_diff
   );
@@ -298,11 +298,11 @@ module axis_1553 #(
   assign s_input_data = {s_sync_tx, s_machester_ii_data_tx, s_machester_ii_parity_tx};
   
   //1553 IO for transmit, if we want a sync only just block out the rest of the transmission.
-  assign tx_diff[0] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ?  tx : 1'b0);
-  assign tx_diff[1] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS))  ? ~tx : 1'b0);
+  assign tx_diff[0] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS)) & ~r_tx_hold ?  tx : 1'b0);
+  assign tx_diff[1] = (r_tx_active & (~r_sync_only | (s_tx_counter < SYNTH_SYNC_BITS_PER_TRANS)) & ~r_tx_hold ? ~tx : 1'b0);
   
-  // When TX is not on hold for delay use tx_active to enable transmit.
-  assign tx_active = (r_tx_hold ? 1'b0 : r_tx_active);
+  // When TX is not on hold for delay use tx_activen to enable transmit.
+  assign tx_activen = r_tx_hold | ~r_tx_active;
   
   // AXIS IO
   // only ready for data when the counter has hit 0 and we have not stored valid input. We wait to load data since we want to make sure all pulses are the correct length.

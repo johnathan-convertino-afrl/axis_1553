@@ -96,9 +96,9 @@ async def increment_test_tx(dut):
 
         await axis_source.send(tx_frame)
 
-        await RisingEdge(dut.tx_active)
+        await FallingEdge(dut.tx_activen)
 
-        assert dut.tx_active.value.integer == 1, "Output is not enabled"
+        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_cmd()
 
@@ -108,9 +108,9 @@ async def increment_test_tx(dut):
         
         await axis_source.send(tx_frame)
         
-        await RisingEdge(dut.tx_active)
+        await FallingEdge(dut.tx_activen)
         
-        assert dut.tx_active.value.integer == 1, "Output is not enabled"
+        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
         
         rx_data = await milstd1553_sink.read_data()
         
@@ -193,18 +193,14 @@ async def increment_test_tx_delay(dut):
         data = x.to_bytes(length = 2, byteorder='little')
 
         tx_frame = AxiStreamFrame(data, tuser=0x4, tx_complete=Event())
-
+        
         await Timer(10, units="us")
 
         await axis_source.send(tx_frame)
 
-        await RisingEdge(dut.tx_active)
+        await FallingEdge(dut.tx_activen)
 
-        assert dut.tx_active.value.integer == 1, "Output is not enabled"
-
-        await FallingEdge(dut.tx_active)
-
-        start_time = get_sim_time("us")
+        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_cmd()
 
@@ -213,16 +209,20 @@ async def increment_test_tx_delay(dut):
         tx_frame = AxiStreamFrame(data, tuser=0xA, tx_complete=Event())
 
         await axis_source.send(tx_frame)
+        
+        start_time = get_sim_time("us")
 
-        await RisingEdge(dut.tx_active)
-
+        await FallingEdge(dut.tx_activen)
+        
         end_time = get_sim_time("us")
 
         delay_time = end_time - start_time
 
         assert delay_time >= 4, "Delay less then 4 us"
+        
+        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
 
-        assert dut.tx_active.value.integer == 1, "Output is not enabled"
+        assert dut.tx_activen.value.integer == 0, "Output is not enabled"
 
         rx_data = await milstd1553_sink.read_data()
 

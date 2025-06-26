@@ -86,7 +86,7 @@
  *                  ---
  *   m_axis_tvalid  - When active high the output data is valid
  *   m_axis_tready  - When set active high the output device is ready for data.
- *   tx_active      - Active high indicates transmit is in progress.
+ *   tx_activen     - Active low indicates transmit is in progress.
  *   tx_diff        - transmit for 1553 (output to RX)
  *   rx_diff        - receive for 1553 (input from TX)
  */
@@ -108,7 +108,7 @@ module tb_cocotb #(
     output  wire [ 4:0]  m_axis_tuser,
     output  wire         m_axis_tvalid,
     input   wire         m_axis_tready,
-    output  wire         tx_active,
+    output  wire         tx_activen,
     output  wire [ 1:0]  tx_diff,
     input   wire [ 1:0]  rx_diff
   );
@@ -144,7 +144,7 @@ module tb_cocotb #(
     .m_axis_tuser(m_axis_tuser),
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tready(m_axis_tready),
-    .tx_active(tx_active),
+    .tx_activen(tx_activen),
     .tx_diff(tx_diff),
     .rx_diff(rx_diff)
   );
