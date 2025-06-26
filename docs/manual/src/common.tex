@@ -97,7 +97,8 @@ part of the transmission that is only for detecting the start of the frame and w
 MIL-STD-1553 data is generated using a combinatorial process for the XNOR. This XNOR is performed using the data and a synthetic clock of 1 MHz at a 2 MHz sample rate (minimum for the digital waveform).
 This is then contatenated with a pre-defined sync that is choosen based upon TUSER, with a generated parity bit XNOR with the synth clock. This is then loaded into the PISO core and cycled out at the sample
 rate by the mod\_clock\_ena\_gen for tx enable pulse. If TUSER had set a delay the mod\_clock\_ena\_gen for tx will be put into a hold state till the counter has finished. Once all the data has been sent the
-AXIS input will become ready again. The transmit output will set the differential lines to zero meaning there is no difference in output and there is no data.
+AXIS input will become ready again. The transmit output will set the differential lines to zero meaning there is no difference in output and there is no data. Transmit is activated using a active low output
+for half duplex operation if needed.
 
 \subsection{Decoding (receive) Method}
 \par
