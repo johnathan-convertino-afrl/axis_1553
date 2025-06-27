@@ -131,6 +131,9 @@ module axis_1553 #(
   // var: cycles_per_mhz
   // calculate the number of cycles the clock changes per period
   localparam integer CYCLES_PER_MHZ = CLOCK_SPEED / BASE_1553_CLOCK_RATE;
+  // var: CYCLES_PER_SAMPLE
+  // number of cycles for each sample
+  localparam integer CYCLES_PER_SAMPLE = CYCLES_PER_MHZ / SAMPLES_PER_MHZ;
   // var: BIT_RATE_PER_MHZ
   // bit rate per mhz
   localparam integer BIT_RATE_PER_MHZ = SAMPLES_PER_MHZ;
@@ -200,6 +203,7 @@ module axis_1553 #(
   
   // diff line correct?
   wire s_rx_diff_active;
+  wire s_rx_timer_active;
   
   // single ended tx
   wire tx;
@@ -326,11 +330,12 @@ module axis_1553 #(
   // frame error for manchester encoding of 2'b11 or 2'b00
   assign frame_err  = r_frame_err;
   
-  // clock stays cleared when no signal diff (xnor)
+  // when there is a difference, rx is active
   assign s_rx_diff_active = ^rx_diff;
-  // when the diff is not active, clear the counter.
-  assign s_clr_clk_rx = (s_rx_counter == 0 ? ~s_rx_diff_active : 1'b0);
-
+  // when the diff is not active, start the time
+  assign s_rx_timer_active = (s_rx_counter == 0 ? ~s_rx_diff_active : 1'b0);
+  // filter out errors for back to back transmissions, divide by two for a half sample and bias by one due to midsample point stuffs.
+  assign s_clr_clk_rx = (r_delay_cnt_rx > (DELAY_TIME-CYCLES_PER_SAMPLE/2)+1 ? 1'b0 : s_rx_timer_active);
   //Group: Instantiated Modules
   /*
    * Module: clk_gen_tx
@@ -491,8 +496,8 @@ module axis_1553 #(
         r_delay_cnt_rx  <= 0;
       end
       
-      // when the rx clock isn't cleared, we are receiving, hold the time.
-      if(s_clr_clk_rx == 1'b0)
+      // when the rx clock isn't cleared
+      if(s_rx_timer_active == 1'b0)
       begin
         r_delay_cnt_rx <= DELAY_TIME-1;
       end
