@@ -131,9 +131,6 @@ module axis_1553 #(
   // var: cycles_per_mhz
   // calculate the number of cycles the clock changes per period
   localparam integer CYCLES_PER_MHZ = CLOCK_SPEED / BASE_1553_CLOCK_RATE;
-  // var: CYCLES_PER_SAMPLE
-  // number of cycles for each sample
-  localparam integer CYCLES_PER_SAMPLE = CYCLES_PER_MHZ / SAMPLES_PER_MHZ;
   // var: BIT_RATE_PER_MHZ
   // bit rate per mhz
   localparam integer BIT_RATE_PER_MHZ = SAMPLES_PER_MHZ;
@@ -335,7 +332,7 @@ module axis_1553 #(
   // when the diff is not active, start the time
   assign s_rx_timer_active = (s_rx_counter == 0 ? ~s_rx_diff_active : 1'b0);
   // filter out errors for back to back transmissions, divide by two for a half sample and bias by one due to midsample point stuffs.
-  assign s_clr_clk_rx = (r_delay_cnt_rx > (DELAY_TIME-CYCLES_PER_SAMPLE/2)+1 ? 1'b0 : s_rx_timer_active);
+  assign s_clr_clk_rx = (r_delay_cnt_rx >= DELAY_TIME-SAMPLES_PER_MHZ ? 1'b0 : s_rx_timer_active);
   //Group: Instantiated Modules
   /*
    * Module: clk_gen_tx
