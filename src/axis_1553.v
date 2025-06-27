@@ -42,9 +42,9 @@
  *
  * Parameters:
  *
- *   CLOCK_SPEED      - This is the aclk frequency in Hz
- *   RX_BAUD_DELAY    - Delay in rx baud enable. This will delay when we sample a bit (default is midpoint when rx delay is 0).
- *   TX_BAUD_DELAY    - Delay in tx baud enable. This will delay the time the bit output starts.
+ *   CLOCK_SPEED        - This is the aclk frequency in Hz
+ *   RX_BAUD_DELAY      - Delay in rx baud enable. This will delay when we sample a bit (default is midpoint when rx delay is 0).
+ *   TX_BAUD_DELAY      - Delay in tx baud enable. This will delay the time the bit output starts.
  *
  * Ports:
  *
@@ -52,6 +52,7 @@
  *   arstn          - Negative reset for AXIS
  *   parity_err     - Indicates error with parity check for receive (active high)
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
+ *   rx_hold_en     - Enable the ability of RX to hold the clock while there is no diff.
  *   s_axis_tdata   - Input data for UART TX.
  *   s_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
@@ -104,6 +105,7 @@ module axis_1553 #(
     input   wire         arstn,
     output  wire         parity_err,
     output  wire         frame_err,
+    input   wire         rx_hold_en,
     input   wire [15:0]  s_axis_tdata,
     input   wire [ 4:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
@@ -197,6 +199,7 @@ module axis_1553 #(
   wire ena_tx;
   wire ena_rx;
   wire s_clr_clk_rx;
+  wire s_hold_clk_rx;
   
   // diff line correct?
   wire s_rx_diff_active;
@@ -329,10 +332,16 @@ module axis_1553 #(
   
   // when there is a difference, rx is active
   assign s_rx_diff_active = ^rx_diff;
+  
   // when the diff is not active, start the time
-  assign s_rx_timer_active = (s_rx_counter == 0 ? ~s_rx_diff_active : 1'b0);
+  assign s_rx_timer_active = ~s_rx_diff_active;
+  
   // filter out errors for back to back transmissions, divide by two for a half sample and bias by one due to midsample point stuffs.
-  assign s_clr_clk_rx = (r_delay_cnt_rx >= DELAY_TIME-SAMPLES_PER_MHZ ? 1'b0 : s_rx_timer_active);
+  assign s_clr_clk_rx = (r_delay_cnt_rx >= DELAY_TIME-BIT_RATE_PER_MHZ ? 1'b0 : s_rx_timer_active);
+  
+  // hold the rx clock when there is no diff for a minimum amount of time.
+  assign s_hold_clk_rx = (rx_hold_en == 1'b1 && r_delay_cnt_rx >= DELAY_TIME-BIT_RATE_PER_MHZ ? s_rx_timer_active : 1'b0);
+  
   //Group: Instantiated Modules
   /*
    * Module: clk_gen_tx
@@ -365,7 +374,7 @@ module axis_1553 #(
     .rstn(arstn),
     .start0(1'b0),
     .clr(s_clr_clk_rx),
-    .hold(1'b0),
+    .hold(s_hold_clk_rx),
     .rate(BASE_1553_SAMPLE_RATE),
     .ena(ena_rx)
   );
@@ -534,8 +543,8 @@ module axis_1553 #(
         r_rx_delay <= 1'b1;
       end
       
-      // receive is not active and we have made a midpoint sample.
-      if(s_rx_diff_active == 1'b0 && ena_rx)
+      // receive is not active
+      if(s_clr_clk_rx == 1'b1)
       begin
         // counter is greater than zero
         // if it is all the needed elments the logic below would blow this out.

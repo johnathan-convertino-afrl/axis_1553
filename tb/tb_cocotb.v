@@ -48,6 +48,7 @@
  *   arstn          - Negative reset for AXIS
  *   parity_err     - Indicates error with parity check (active high)
  *   frame_err      - Indicates the diff line went to no diff before data catpure finished.
+ *   rx_hold_en     - Enable the ability of RX to hold the clock while there is no diff.
  *   s_axis_tdata   - Input data for UART TX.
  *   s_axis_tuser   - Information about the AXIS data {S,D,TYY} (4:0)
  *
@@ -100,6 +101,7 @@ module tb_cocotb #(
     input   wire         arstn,
     output  wire         parity_err,
     output  wire         frame_err,
+    input   wire         rx_hold_en,
     input   wire [15:0]  s_axis_tdata,
     input   wire [ 4:0]  s_axis_tuser,
     input   wire         s_axis_tvalid,
@@ -136,6 +138,7 @@ module tb_cocotb #(
     .arstn(arstn),
     .parity_err(parity_err),
     .frame_err(frame_err),
+    .rx_hold_en(rx_hold_en),
     .s_axis_tdata(s_axis_tdata),
     .s_axis_tuser(s_axis_tuser),
     .s_axis_tvalid(s_axis_tvalid),

@@ -87,6 +87,8 @@ async def increment_test_tx(dut):
     
     dut.rx_diff.value = 0
     
+    dut.rx_hold_en.value = 0
+    
     await reset_dut(dut)
 
     for x in range(0, 2**8):
@@ -135,6 +137,8 @@ async def increment_test_rx(dut):
     axis_sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.aclk, dut.arstn, False)
 
     milstd1553_source = MILSTD1553Source(dut.rx_diff, dut.arstn)
+    
+    dut.rx_hold_en.value = 1
 
     await reset_dut(dut)
 
@@ -186,6 +190,8 @@ async def increment_test_tx_delay(dut):
     milstd1553_sink = MILSTD1553Sink(dut.tx_diff, dut.arstn)
 
     dut.rx_diff.value = 0
+    
+    dut.rx_hold_en.value = 0
 
     await reset_dut(dut)
 
@@ -247,6 +253,8 @@ async def increment_test_rx_delay(dut):
     milstd1553_source = MILSTD1553Source(dut.rx_diff, dut.arstn)
 
     await reset_dut(dut)
+    
+    dut.rx_hold_en.value = 1
 
     for x in range(0, 2**8):
         data = x.to_bytes(length = 2, byteorder='little')
