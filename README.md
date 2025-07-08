@@ -23,7 +23,7 @@
 
 ### Version
 #### Current
-  - V1.0.0 - initial release
+  - V0.0.0 - Work in progress, needs a better receive method to resync with the embedded clock (currently uses midpoint sampling).
 
 #### Previous
   - none
